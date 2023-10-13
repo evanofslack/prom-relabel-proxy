@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,9 +11,7 @@ import (
 	"time"
 
 	"github.com/go-kit/log"
-	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/model/relabel"
-	"github.com/prometheus/prometheus/model/textparse"
 	"gopkg.in/yaml.v2"
 )
 
@@ -46,15 +43,15 @@ type ScrapeConfig struct {
 	// The URL scheme with which to fetch metrics from targets.
 	Scheme string `yaml:"scheme,omitempty"`
 	// The hostnames of scrape targets
-	StaticConfigs []StaticConfig `yaml:"static_configs"`
+	StaticConfigs []*StaticConfig `yaml:"static_configs"`
 	// List of target relabel configurations.
-	RelabelConfigs []relabel.Config `yaml:"relabel_configs,omitempty"`
+	RelabelConfigs []*relabel.Config `yaml:"relabel_configs,omitempty"`
 	// List of metric relabel configurations.
-	MetricRelabelConfigs []relabel.Config `yaml:"metric_relabel_configs,omitempty"`
+	MetricRelabelConfigs []*relabel.Config `yaml:"metric_relabel_configs,omitempty"`
 }
 
 type Config struct {
-	ScrapeConfigs []ScrapeConfig `yaml:"scrape_configs"`
+	ScrapeConfigs []*ScrapeConfig `yaml:"scrape_configs"`
 }
 
 func loadConfig(path string) (*Config, error) {
@@ -105,86 +102,6 @@ func main() {
 		err = fmt.Errorf("Failed to shutdown http server: %w", err)
 		logger.Log("err", err)
 	}
-}
-
-
-func parseProm(buf []byte, relabelCfgs []relabel.Config) error {
-
-	fmt.Printf("new parser\n")
-	parser := textparse.NewPromParser(buf)
-
-	count := 0
-	for {
-		count++
-		// fmt.Printf("\nlooping parser #%d", count)
-
-		entry, err := parser.Next()
-		if errors.Is(err, io.EOF) {
-			fmt.Printf("break, eof\n")
-			break
-		}
-
-		isHist := false
-		isSeries := false
-		switch entry {
-
-		case textparse.EntryHelp:
-			metricName, help := parser.Help()
-			fmt.Printf("\n# HELP %s %s", string(metricName), string(help))
-
-		case textparse.EntryType:
-			metricName, typ := parser.Type()
-			fmt.Printf("\n# TYPE %s %s", string(metricName), string(typ))
-
-		case textparse.EntryComment:
-			comment := parser.Comment()
-			fmt.Printf("\n# %s", string(comment))
-
-		case textparse.EntryHistogram:
-			isHist = true
-		case textparse.EntrySeries:
-			isSeries = true
-		}
-
-		if isHist {
-			var labels labels.Labels
-			parser.Metric(&labels)
-			metric, _, h, fh := parser.Histogram()
-			fmt.Printf("\nlabels: %v", labels.String())
-			fmt.Printf("\nmetric: %v", string(metric))
-			if h != nil {
-				fmt.Printf("\nh: %v", h)
-			}
-			if fh != nil {
-				fmt.Printf("\nfh: %v", fh)
-			}
-		}
-		if isSeries {
-			var labels labels.Labels
-			parser.Metric(&labels)
-
-			fmt.Printf("\nbefore labels: %v", labels.String())
-
-			rlc := []*relabel.Config{}
-			for _, c := range relabelCfgs {
-				rlc = append(rlc, &c)
-			}
-			processedLabels, _ := relabel.Process(labels, rlc...)
-			if processedLabels.Len() > 0 {
-				fmt.Printf("\nafter labels: %v", processedLabels.String())
-			}
-
-			// metric, _, val := parser.Series()
-			// valStr := strconv.FormatFloat(val, 'e', -1, 64)
-			//
-			// fmt.Printf("\n%s %s", metric, valStr)
-
-			// fmt.Printf("\nlabels: %v", labels.String())
-			// fmt.Printf("\nmetric: %v", string(metric))
-			// fmt.Printf("\nval: %v", val)
-		}
-	}
-	return nil
 }
 
 func scrapeTarget(path string) ([]byte, error) {
@@ -239,10 +156,11 @@ func scrape(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					logger.Log("err", err)
 				}
-				err = parseProm(buf, scrapeCfg.RelabelConfigs)
+				entries, err := parseToSlice(buf, scrapeCfg.RelabelConfigs)
 				if err != nil {
 					logger.Log("err", err)
 				}
+				logger.Log("entities", len(entries))
 			}
 		}
 	}
