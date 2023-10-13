@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math"
 	"sort"
-	"strconv"
-	"strings"
 
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/model/relabel"
@@ -50,12 +47,18 @@ func newComment(text string, lineNum int, metricName string) entry {
 	return e
 }
 
-// parseToSlice reads in lines and parses to entries.
+type parser struct{}
+
+func newParser() *parser {
+	p := &parser{}
+	return p
+}
+
+// parse reads in lines and converts to entries.
 // Relabelling is applied to each metric entry.
 // Ensures each entry labelset is unique by combining
 // values for duplicate labels.
-func parseToSlice(buf []byte, relabelCfgs []*relabel.Config) ([]entry, error) {
-
+func (p *parser) parse(buf []byte, rlcfgs []*relabel.Config) ([]entry, error) {
 	var err error
 	var count int
 	comments := make([]entry, 0)
@@ -126,7 +129,7 @@ func parseToSlice(buf []byte, relabelCfgs []*relabel.Config) ([]entry, error) {
 			parser.Metric(&labels)
 
 			// Apply each relabel rule
-			processedLabels, _ := relabel.Process(labels, relabelCfgs...)
+			processedLabels, _ := relabel.Process(labels, rlcfgs...)
 
 			// TODO: support timestamps
 			metric, _, val := parser.Series()
@@ -156,46 +159,5 @@ func parseToSlice(buf []byte, relabelCfgs []*relabel.Config) ([]entry, error) {
 	})
 
 	return entries, err
-}
 
-func formatEntries(entries []entry) string {
-	out := ""
-	for _, entry := range entries {
-		if entry.isComment {
-			out += entry.comment + "\n"
-		} else {
-			valStr := convFloat(entry.val)
-			metricName := entry.labels.Get(nameLabel)
-			labels := entry.labels.MatchLabels(false, nameLabel)
-			labelsStr := labels.String()
-			if labels.IsEmpty() {
-				labelsStr = ""
-			}
-			format := fmt.Sprintf("%s%s %s", metricName, labelsStr, valStr)
-			out += format + "\n"
-		}
-	}
-	out = strings.TrimSuffix(out, "\n")
-	return out
-}
-
-// common prom implementation
-// https://github.com/prometheus/common/blob/7043ea0e691b6da9ecbd08e7ae41e9cf28898e98/expfmt/text_create.go#L432
-func convFloat(f float64) string {
-	switch {
-	case f == 1:
-		return "1"
-	case f == 0:
-		return "0"
-	case f == -1:
-		return "-1"
-	case math.IsNaN(f):
-		return "NaN"
-	case math.IsInf(f, +1):
-		return "+Inf"
-	case math.IsInf(f, -1):
-		return "-Inf"
-	default:
-		return strconv.FormatFloat(f, 'g', -1, 64)
-	}
 }

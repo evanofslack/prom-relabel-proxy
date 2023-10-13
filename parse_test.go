@@ -63,7 +63,8 @@ http_requests_total{hostname="node2", method="get"} 82232`
 )
 
 func TestParse(t *testing.T) {
-	entries, err := parseToSlice([]byte(input1), []*relabel.Config{})
+	p := newParser()
+	entries, err := p.parse([]byte(input1), []*relabel.Config{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,12 +75,14 @@ func TestParse(t *testing.T) {
 }
 
 func TestFormat(t *testing.T) {
-	entries, err := parseToSlice([]byte(input1), []*relabel.Config{})
+	p := newParser()
+	entries, err := p.parse([]byte(input1), []*relabel.Config{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	output := formatEntries(entries)
+	f := newFormatter()
+	output := f.format(entries)
 
 	if output != input1 {
 		dmp := diffmatchpatch.New()
@@ -97,12 +100,14 @@ func TestSimpleRelabel(t *testing.T) {
 		Action:       relabel.LabelDrop,
 	}
 
-	entries, err := parseToSlice([]byte(input2), []*relabel.Config{cfg})
+	p := newParser()
+	entries, err := p.parse([]byte(input2), []*relabel.Config{cfg})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	output := formatEntries(entries)
+	f := newFormatter()
+	output := f.format(entries)
 
 	if output != output2 {
 		dmp := diffmatchpatch.New()
