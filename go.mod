@@ -1,6 +1,6 @@
 module github.com/evanofslack/prom-relabel-proxy
 
-go 1.20
+go 1.21
 
 require (
 	github.com/go-kit/log v0.2.1
