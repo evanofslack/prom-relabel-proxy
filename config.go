@@ -1,4 +1,4 @@
-package main
+package proxy
 
 import (
 	"fmt"
@@ -8,12 +8,27 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type staticConfig struct {
-	Targets []string `yaml:"targets"`
+// Application configuration
+type Config struct {
+	Addr           string
+	PromConfigPath string
+}
+
+func NewConfig(addr, promConfigPath string) *Config {
+	c := &Config{
+		Addr:           addr,
+		PromConfigPath: promConfigPath,
+	}
+	return c
+}
+
+// Prometheus relabelling configuration
+// Uses same structure as regular prometheus config.
+type PromConfig struct {
+	ScrapeConfigs []*scrapeConfig `yaml:"scrape_configs"`
 }
 
 // scrapeConfig defines a proxied scrape job.
-// Uses same structure as regular prometheus config.
 type scrapeConfig struct {
 	// The job name to which the job label is set by default.
 	JobName string `yaml:"job_name"`
@@ -29,13 +44,13 @@ type scrapeConfig struct {
 	MetricRelabelConfigs []*relabel.Config `yaml:"metric_relabel_configs,omitempty"`
 }
 
-type promConfig struct {
-	ScrapeConfigs []*scrapeConfig `yaml:"scrape_configs"`
+type staticConfig struct {
+	Targets []string `yaml:"targets"`
 }
 
-func loadPromConfig(path string) (*promConfig, error) {
+func LoadPromConfig(path string) (*PromConfig, error) {
 
-	c := &promConfig{}
+	c := &PromConfig{}
 
 	file, err := os.ReadFile(path)
 	if err != nil {

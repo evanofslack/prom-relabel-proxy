@@ -1,4 +1,4 @@
-package main
+package proxy
 
 import (
 	"bytes"
@@ -6,19 +6,19 @@ import (
 	"net/http"
 )
 
-type scraper struct {
+type Scraper struct {
 	client *http.Client
 }
 
-func newScraper() *scraper {
-	s := &scraper{
+func NewScraper() *Scraper {
+	s := &Scraper{
 		client: &http.Client{},
 	}
 
 	return s
 }
 
-func (s *scraper) scrape(path string) ([]byte, error) {
+func (s *Scraper) scrape(path string) ([]byte, error) {
 	var buf bytes.Buffer
 	req, err := http.NewRequest("GET", path, nil)
 	if err != nil {

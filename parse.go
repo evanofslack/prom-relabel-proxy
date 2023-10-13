@@ -1,4 +1,4 @@
-package main
+package proxy
 
 import (
 	"errors"
@@ -47,10 +47,10 @@ func newComment(text string, lineNum int, metricName string) entry {
 	return e
 }
 
-type parser struct{}
+type Parser struct{}
 
-func newParser() *parser {
-	p := &parser{}
+func NewParser() *Parser {
+	p := &Parser{}
 	return p
 }
 
@@ -58,7 +58,7 @@ func newParser() *parser {
 // Relabelling is applied to each metric entry.
 // Ensures each entry labelset is unique by combining
 // values for duplicate labels.
-func (p *parser) parse(buf []byte, rlcfgs []*relabel.Config) ([]entry, error) {
+func (p *Parser) parse(buf []byte, rlcfgs []*relabel.Config) ([]entry, error) {
 	var err error
 	var count int
 	comments := make([]entry, 0)

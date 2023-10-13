@@ -1,4 +1,4 @@
-package main
+package proxy
 
 import (
 	"fmt"
@@ -7,14 +7,14 @@ import (
 	"strings"
 )
 
-type formatter struct{}
+type Formatter struct{}
 
-func newFormatter() *formatter {
-	f := &formatter{}
+func NewFormatter() *Formatter {
+	f := &Formatter{}
 	return f
 }
 
-func (f *formatter) format(entries []entry) string {
+func (f *Formatter) format(entries []entry) string {
 	out := ""
 	for _, entry := range entries {
 		if entry.isComment {

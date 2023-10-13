@@ -1,4 +1,4 @@
-package main
+package proxy
 
 import (
 	"testing"
@@ -63,7 +63,7 @@ http_requests_total{hostname="node2", method="get"} 82232`
 )
 
 func TestParse(t *testing.T) {
-	p := newParser()
+	p := NewParser()
 	entries, err := p.parse([]byte(input1), []*relabel.Config{})
 	if err != nil {
 		t.Fatal(err)
@@ -75,13 +75,13 @@ func TestParse(t *testing.T) {
 }
 
 func TestFormat(t *testing.T) {
-	p := newParser()
+	p := NewParser()
 	entries, err := p.parse([]byte(input1), []*relabel.Config{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	f := newFormatter()
+	f := NewFormatter()
 	output := f.format(entries)
 
 	if output != input1 {
@@ -100,13 +100,13 @@ func TestSimpleRelabel(t *testing.T) {
 		Action:       relabel.LabelDrop,
 	}
 
-	p := newParser()
+	p := NewParser()
 	entries, err := p.parse([]byte(input2), []*relabel.Config{cfg})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	f := newFormatter()
+	f := NewFormatter()
 	output := f.format(entries)
 
 	if output != output2 {

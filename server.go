@@ -1,4 +1,4 @@
-package main
+package proxy
 
 import (
 	"context"
@@ -10,21 +10,21 @@ import (
 	"github.com/go-kit/log"
 )
 
-type server struct {
-	promConfig *promConfig
+type Server struct {
+	promConfig *PromConfig
 	srv        *http.Server
-	scraper    *scraper
-	parser     *parser
-	formatter  *formatter
+	scraper    *Scraper
+	parser     *Parser
+	formatter  *Formatter
 }
 
-func newServer(addr string, promConfig *promConfig, scraper *scraper, parser *parser, formatter *formatter) *server {
+func NewServer(addr string, promConfig *PromConfig, scraper *Scraper, parser *Parser, formatter *Formatter) *Server {
 
 	srv := &http.Server{
-		Addr: listenAddr,
+		Addr: addr,
 	}
 
-	s := &server{
+	s := &Server{
 		promConfig: promConfig,
 		srv:        srv,
 		scraper:    scraper,
@@ -41,19 +41,19 @@ func newServer(addr string, promConfig *promConfig, scraper *scraper, parser *pa
 	return s
 }
 
-func (s *server) start() {
+func (s *Server) Start() {
 	go s.srv.ListenAndServe()
 }
 
-func (s *server) shutdown(ctx context.Context) error {
+func (s *Server) Shutdown(ctx context.Context) error {
 	return s.srv.Shutdown(ctx)
 }
 
-func (s *server) ping(w http.ResponseWriter, r *http.Request) {
+func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "pong")
 }
 
-func (s *server) scrape(w http.ResponseWriter, r *http.Request) {
+func (s *Server) scrape(w http.ResponseWriter, r *http.Request) {
 
 	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
 	logger.Log("msg", "scraping endpoint")
@@ -68,6 +68,7 @@ func (s *server) scrape(w http.ResponseWriter, r *http.Request) {
 				url := fmt.Sprintf("%s://%s%s", scheme, target, path)
 				buf, err := s.scraper.scrape(url)
 				if err != nil {
+					// TODO: write error to w
 					logger.Log("err", err)
 				}
 
