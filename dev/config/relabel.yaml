@@ -13,3 +13,20 @@ scrape_configs:
         regex: "prometheus_http_requests_total"
         target_label: "added_label"
         replacement: "example"
+  - job_name: "node-exporter"
+    metrics_path: "/metrics"
+    scheme: "http"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+    relabel_configs:
+      - source_labels: [__name__]
+        regex: "node_cpu_seconds_total"
+        target_label: cpu
+        replacement: ""
+      - source_labels: [__name__]
+        regex: "node_cpu_seconds_total"
+        target_label: "added_label"
+        replacement: "example"
+      - source_labels: [__name__]
+        regex: "go_.*"
+        action: drop
