@@ -96,7 +96,11 @@ func (p *Parser) parse(buf []byte, rlcfgs []*relabel.Config) ([]entry, error) {
 
 		case textparse.EntryType:
 			metricName, typ := parser.Type()
-			text := fmt.Sprintf("# TYPE %s %s", string(metricName), string(typ))
+			typeName := string(typ)
+			if typeName == "unknown" {
+				typeName = "untyped"
+			}
+			text := fmt.Sprintf("# TYPE %s %s", string(metricName), typeName)
 			e := newComment(text, count, string(metricName))
 			comments = append(comments, e)
 
