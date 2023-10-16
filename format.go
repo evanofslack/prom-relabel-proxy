@@ -2,19 +2,21 @@ package proxy
 
 import (
 	"fmt"
+	"log/slog"
 	"math"
 	"strconv"
 	"strings"
 )
 
-type Formatter struct{}
+type Formatter struct{ logger *slog.Logger }
 
-func NewFormatter() *Formatter {
-	f := &Formatter{}
+func NewFormatter(logger *slog.Logger) *Formatter {
+	f := &Formatter{logger: logger}
 	return f
 }
 
 func (f *Formatter) format(entries []entry) string {
+	f.logger.Debug("starting to format")
 	out := ""
 	for _, entry := range entries {
 		if entry.isComment {
@@ -32,6 +34,7 @@ func (f *Formatter) format(entries []entry) string {
 		}
 	}
 	out = strings.TrimSuffix(out, "\n")
+	f.logger.Debug(fmt.Sprintf("formatted %d entries", len(entries)))
 	return out
 }
 

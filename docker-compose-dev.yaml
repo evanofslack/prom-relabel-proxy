@@ -9,7 +9,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./config:/config
-    command: -c /config/relabel.yaml
+    command: -c /config/relabel.yaml -l debug -e debug
 
   prometheus:
     image: prom/prometheus:latest

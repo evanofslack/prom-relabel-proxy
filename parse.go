@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"sort"
 
 	"github.com/prometheus/prometheus/model/labels"
@@ -47,10 +48,12 @@ func newComment(text string, lineNum int, metricName string) entry {
 	return e
 }
 
-type Parser struct{}
+type Parser struct {
+	logger *slog.Logger
+}
 
-func NewParser() *Parser {
-	p := &Parser{}
+func NewParser(logger *slog.Logger) *Parser {
+	p := &Parser{logger: logger}
 	return p
 }
 
@@ -59,6 +62,7 @@ func NewParser() *Parser {
 // Ensures each entry labelset is unique by combining
 // values for duplicate labels.
 func (p *Parser) parse(buf []byte, rlcfgs []*relabel.Config) ([]entry, error) {
+	p.logger.Debug("starting to parse")
 	var err error
 	var count int
 	comments := make([]entry, 0)
@@ -157,6 +161,8 @@ func (p *Parser) parse(buf []byte, rlcfgs []*relabel.Config) ([]entry, error) {
 	sort.Slice(entries, func(i, j int) bool {
 		return entries[i].lineNum < entries[j].lineNum
 	})
+
+	p.logger.Debug(fmt.Sprintf("parsed %d entries", len(entries)))
 
 	return entries, err
 

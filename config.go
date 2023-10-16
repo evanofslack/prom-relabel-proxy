@@ -12,12 +12,16 @@ import (
 type Config struct {
 	Addr           string
 	PromConfigPath string
+	LogLevel       string
+	Env            string
 }
 
-func NewConfig(addr, promConfigPath string) *Config {
+func NewConfig(addr, promConfigPath, logLevel, env string) *Config {
 	c := &Config{
 		Addr:           addr,
 		PromConfigPath: promConfigPath,
+		LogLevel:       logLevel,
+		Env:            env,
 	}
 	return c
 }
