@@ -74,7 +74,7 @@ func (s *Server) scrape(w http.ResponseWriter, r *http.Request) {
 	logger := s.logger.With("endpoint", "scrape")
 	logger.Debug("handling endpoint")
 
-	out := ""
+	all := ""
 	scrapes, failedScrapes := 0, 0
 
 	for _, scrapeCfg := range s.promConfig.ScrapeConfigs {
@@ -90,20 +90,30 @@ func (s *Server) scrape(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					failedScrapes++
 					logger.Error(err.Error())
+					continue
 				}
 
 				// Parse proxied metrics
 				entries, err := s.parser.parse(buf, scrapeCfg.RelabelConfigs)
 				if err != nil {
 					logger.Error(err.Error())
+					continue
 				}
 
 				// Format proxied metrics
 				output := s.formatter.format(entries)
-				out += output
+
+				// Add a newline if concatenating
+				if scrapes > 0 && output != "" {
+					output = "\n" + output
+				}
+				all += output
 			}
 		}
 	}
+
+	// Remove any trailing newline
+	all = strings.TrimSuffix(all, "\n")
 
 	if failedScrapes != 0 {
 		logger.Warn(fmt.Sprintf("failed scraping %d/%d targets", failedScrapes, scrapes))
@@ -118,6 +128,6 @@ func (s *Server) scrape(w http.ResponseWriter, r *http.Request) {
 	// If at least one scrape succeeds, return the metrics
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
-	io.WriteString(w, out)
+	io.WriteString(w, all)
 	logger.Debug(fmt.Sprintf("finished scraping %d targets", scrapes))
 }
