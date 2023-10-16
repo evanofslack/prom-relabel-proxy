@@ -14,7 +14,7 @@ import (
 
 const (
 	defaultAddr           = ":9091"
-	defaultConfigPath     = "prometheus.yml"
+	defaultConfigPath     = "relabel.yaml"
 	defaultLogLevel       = "info"
 	defaultAppEnv         = "prod"
 	serverShutdownTimeout = time.Second * 10

@@ -21,7 +21,7 @@ func NewLogger(level, env string) *slog.Logger {
 	}
 
 	var handler slog.Handler
-	if env = strings.ToLower(env); env == "debug" {
+	if strings.ToLower(env) == "debug" {
 		opts := &slog.HandlerOptions{
 			Level:     loglevel,
 			AddSource: true,
@@ -31,7 +31,6 @@ func NewLogger(level, env string) *slog.Logger {
 		opts := &slog.HandlerOptions{
 			Level: loglevel,
 		}
-
 		handler = slog.NewJSONHandler(os.Stderr, opts)
 	}
 
