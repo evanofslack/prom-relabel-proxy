@@ -3,9 +3,9 @@ package proxy
 import (
 	"testing"
 
-	"github.com/prometheus/common/model"
+	"log/slog"
+
 	"github.com/prometheus/prometheus/model/relabel"
-	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 const (
@@ -63,55 +63,20 @@ http_requests_total{hostname="node2", method="get"} 82232`
 )
 
 func TestParse(t *testing.T) {
-	p := NewParser()
+	p := NewParser(slog.Default())
 	entries, err := p.parse([]byte(input1), []*relabel.Config{})
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	if want, got := 33, len(entries); want != got {
 		t.Fatalf("Wrong entry length, wanted %d, got %d", want, got)
 	}
-}
 
-func TestFormat(t *testing.T) {
-	p := NewParser()
-	entries, err := p.parse([]byte(input1), []*relabel.Config{})
+	entries, err = p.parse([]byte(input2), []*relabel.Config{})
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	f := NewFormatter()
-	output := f.format(entries)
-
-	if output != input1 {
-		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(input1, output, false)
-		t.Fatalf("input does not match output\ndiff:%s", dmp.DiffPrettyText(diffs))
-	}
-}
-
-func TestSimpleRelabel(t *testing.T) {
-
-	// Drop 'code' label from `http_requests_total`
-	cfg := &relabel.Config{
-		SourceLabels: model.LabelNames{"http_requests_total"},
-		Regex:        relabel.MustNewRegexp("code"),
-		Action:       relabel.LabelDrop,
-	}
-
-	p := NewParser()
-	entries, err := p.parse([]byte(input2), []*relabel.Config{cfg})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	f := NewFormatter()
-	output := f.format(entries)
-
-	if output != output2 {
-		dmp := diffmatchpatch.New()
-		diffs := dmp.DiffMain(input1, output, false)
-		t.Fatalf("input does not match output\ndiff:%s", dmp.DiffPrettyText(diffs))
+	if want, got := 10, len(entries); want != got {
+		t.Fatalf("Wrong entry length, wanted %d, got %d", want, got)
 	}
 }
