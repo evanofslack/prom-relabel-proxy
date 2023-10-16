@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 )
 
 type Server struct {
@@ -17,7 +18,7 @@ type Server struct {
 	formatter  *Formatter
 }
 
-func NewServer(logger *slog.Logger, addr string, promConfig *PromConfig, scraper *Scraper, parser *Parser, formatter *Formatter) *Server {
+func NewServer(logger *slog.Logger, addr, metricsPath string, promConfig *PromConfig, scraper *Scraper, parser *Parser, formatter *Formatter) *Server {
 
 	srv := &http.Server{
 		Addr: addr,
@@ -32,10 +33,14 @@ func NewServer(logger *slog.Logger, addr string, promConfig *PromConfig, scraper
 		formatter:  formatter,
 	}
 
+	if !strings.HasPrefix(metricsPath, "/") {
+		metricsPath = fmt.Sprintf("/%s", metricsPath)
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ready", s.ready)
 	mux.HandleFunc("/healthy", s.healthy)
-	mux.HandleFunc("/metrics", s.scrape)
+	mux.HandleFunc(metricsPath, s.scrape)
 
 	s.srv.Handler = mux
 

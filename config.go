@@ -14,14 +14,16 @@ type Config struct {
 	PromConfigPath string
 	LogLevel       string
 	Env            string
+	MetricsPath    string
 }
 
-func NewConfig(addr, promConfigPath, logLevel, env string) *Config {
+func NewConfig(addr, promConfigPath, logLevel, env, metricsPath string) *Config {
 	c := &Config{
 		Addr:           addr,
 		PromConfigPath: promConfigPath,
 		LogLevel:       logLevel,
 		Env:            env,
+		MetricsPath:    metricsPath,
 	}
 	return c
 }

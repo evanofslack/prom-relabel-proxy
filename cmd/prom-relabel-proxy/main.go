@@ -17,19 +17,21 @@ const (
 	defaultConfigPath     = "relabel.yaml"
 	defaultLogLevel       = "info"
 	defaultAppEnv         = "prod"
+	defaultMetricsPath    = "/metrics"
 	serverShutdownTimeout = time.Second * 10
 )
 
 func usage() {
-	log.Printf("Usage: prom-relabel-proxy [-a listen address] [-c relabel config path] [-e app environment] [-l logLevel]\n")
+	log.Printf("usage: prom-relabel-proxy [-a listen address] [-c relabel config path] [-e app environment] [-l logLevel] [-m metrics path]\n")
 	flag.PrintDefaults()
 }
 
 func parseArgs() (*proxy.Config, error) {
 	var addr = flag.String("a", defaultAddr, "address proxy listens on")
 	var promConfigPath = flag.String("c", defaultConfigPath, "path to prometheus relabel config")
-	var logLevel = flag.String("l", defaultLogLevel, "log level (debug, info, warn, error)")
-	var appEnv = flag.String("e", defaultAppEnv, "app environment (debug, prod)")
+	var appEnv = flag.String("e", defaultAppEnv, "app environment [debug, prod]")
+	var logLevel = flag.String("l", defaultLogLevel, "log level [debug, info, warn, error]")
+	var metricsPath = flag.String("m", defaultMetricsPath, "path to serve metrics from")
 
 	log.SetFlags(0)
 	flag.Usage = usage
@@ -41,7 +43,7 @@ func parseArgs() (*proxy.Config, error) {
 		return nil, fmt.Errorf("app does not accept arguments")
 	}
 
-	config := proxy.NewConfig(*addr, *promConfigPath, *logLevel, *appEnv)
+	config := proxy.NewConfig(*addr, *promConfigPath, *logLevel, *appEnv, *metricsPath)
 	return config, nil
 }
 
@@ -70,7 +72,7 @@ func main() {
 	parser := proxy.NewParser(logger.With("subsystem", "parser"))
 	formatter := proxy.NewFormatter(logger.With("subsystem", "formatter"))
 
-	server := proxy.NewServer(logger.With("subsystem", "server"), config.Addr, promConfig, scraper, parser, formatter)
+	server := proxy.NewServer(logger.With("subsystem", "server"), config.Addr, config.MetricsPath, promConfig, scraper, parser, formatter)
 	server.Start()
 
 	<-ctx.Done()
