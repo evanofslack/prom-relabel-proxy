@@ -4,22 +4,27 @@ Simple proxy to enable relabelling and modification of prometheus metrics
 
 ## Description
 
-:warning: you probably don't need this
-
-Prometheus offers powerful relabelling rules when scraping targets.
-If you control the prometheus scrape config, it is **highly** recommended
-to apply relabel rules there. This proxy is only useful if you cannot apply
-relabel rules in your prometheus service.
-
 This proxy sits in front of any number of scrape targets. When a scrape request
 is sent to the proxy, it will scrape all configured targets, apply any relabel rules
 and return the formatted metrics to the original requester.
 
+⚠️ Disclaimer: you probably don't need this
+
+Prometheus offers powerful relabelling rules when scraping targets.
+If you control the prometheus scrape config, it is **highly recommended**
+to apply relabel rules there. This proxy is only useful if you cannot apply
+relabel rules in your prometheus service. This proxy does not have full parity
+with prometheus's native relabelling.
+
 ## Getting Started
+
+### Examples
+
+Please see [/examples](https://github.com/evanofslack/prom-relabel-proxy/tree/main/example) for a preconfigured demo
 
 ### Running
 
-The proxy can be run from a pre-built docker container:
+The proxy can be run from a [pre-built docker container](https://hub.docker.com/r/evanofslack/prom-relabel-proxy/tags)
 
 ```yaml
 version: "3.7"
@@ -35,7 +40,7 @@ services:
     command: -c /config/relabel.yaml
 ```
 
-Alternatively, build the executable from source:
+Alternatively, build the executable from source
 
 ```bash
 git clone https://github.com/evanofslack/prom-relabel-proxy
