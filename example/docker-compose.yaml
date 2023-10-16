@@ -3,7 +3,7 @@ version: "3.7"
 services:
   prom-relabel-proxy:
     container_name: prom-relabel-proxy
-    build: evanofslack/prom-relabel-proxy:latest
+    image: evanofslack/prom-relabel-proxy:latest
     ports:
       - 9091:9091
     restart: unless-stopped
